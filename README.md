@@ -14,6 +14,16 @@ Applying and messaging stay manual.
 6. **`message_drafter.py`:** writes a short draft per contact into `drafts.csv`. You edit and send it yourself.
 7. **`follow_up.py`:** tracks what you sent and drafts the one follow-up when there's no reply after about 6 days.
 
+## One command
+
+```bash
+python pipeline.py run --dry-run   # hiring check, then preview which companies Hunter would look up (spends nothing)
+python pipeline.py run             # hiring check -> contacts -> drafts
+python pipeline.py status          # counts at every stage and follow-ups due
+```
+
+`run` stops with a clear message if something is missing (no `companies.csv`, no `HUNTER_API_KEY`, no `profile.json`) and never sends anything. Options: `--max-lookups`, `--min-score`, `--any-location`, `--llm gemini`, `--applied`.
+
 ## Usage
 
 ```bash
