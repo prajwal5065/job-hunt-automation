@@ -6,3 +6,5 @@ __pycache__/
 .env
 contacts.csv
 contacts_cache.json
+profile.json
+drafts.csv
