@@ -12,7 +12,7 @@ Applying and messaging stay manual.
 4. **`contact_finder.py`:** for the best-scoring matches, looks up a few hiring-relevant contacts via Hunter.io (free plan) into `contacts.csv`.
 5. **You:** pick one person per role, write a short specific message, send it yourself, log it in `contacted` / `notes`.
 6. **`message_drafter.py`:** writes a short draft per contact into `drafts.csv`. You edit and send it yourself.
-7. *(next)* follow-up reminders (5-7 days after sending).
+7. **`follow_up.py`:** tracks what you sent and drafts the one follow-up when there's no reply after about 6 days.
 
 ## Usage
 
@@ -57,6 +57,20 @@ python message_drafter.py --llm gemini   # optional: personalise with Gemini (GE
 - Add `--applied` only once you've actually applied; otherwise the draft says you're applying.
 - The LLM is told to use only facts from `profile.json`, but read every draft before sending. If the LLM call fails or runs long, it falls back to the template.
 - Keep `highlights` to things that are true and specific; one good line beats a list.
+
+## Follow-ups
+
+```bash
+python follow_up.py sent "Acme"        # you sent the message today -> follow-up due in 6 days
+python follow_up.py                    # lists what's due; writes follow_ups.csv with a draft for each
+python follow_up.py followed "Acme"    # you sent the follow-up -> never shown as due again
+python follow_up.py replied "Acme"     # they answered -> closed
+```
+
+- Matches the roadmap: one polite follow-up after 5-7 days, then stop. Change the wait with `--days`.
+- `--email` targets one contact if a company has several rows. Company names are matched ignoring case.
+- State lives in `drafts.csv` (`sent`, `follow_up_date`, `replied`, `followed_up`), so you can also edit it in a spreadsheet. Dates are YYYY-MM-DD or DD-MM-YYYY.
+- Older `drafts.csv` files without the new columns are upgraded automatically.
 
 ## Tuning
 
