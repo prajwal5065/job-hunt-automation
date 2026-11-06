@@ -1,0 +1,6 @@
+{
+  "role_keywords": ["genai", "gen ai", "generative ai", "llm", "llms", "rag", "machine learning", "ml", "ai engineer", "ai", "nlp", "deep learning", "data scientist", "applied scientist"],
+  "exclude_title_words": ["senior", "sr", "staff", "principal", "lead", "manager", "director", "head", "vp", "architect", "sales", "marketing", "recruiter", "account executive", "legal", "finance"],
+  "entry_level_words": ["intern", "internship", "fresher", "graduate", "junior", "associate", "entry", "trainee"],
+  "locations": ["pune", "india", "remote", "anywhere"]
+}
