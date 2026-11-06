@@ -11,7 +11,8 @@ Applying and messaging stay manual.
 3. **You:** open the links in `matches.csv`, apply, and track progress in the `status` / `notes` columns.
 4. **`contact_finder.py`:** for the best-scoring matches, looks up a few hiring-relevant contacts via Hunter.io (free plan) into `contacts.csv`.
 5. **You:** pick one person per role, write a short specific message, send it yourself, log it in `contacted` / `notes`.
-6. *(next)* message drafts.
+6. **`message_drafter.py`:** writes a short draft per contact into `drafts.csv`. You edit and send it yourself.
+7. *(next)* follow-up reminders (5-7 days after sending).
 
 ## Usage
 
@@ -43,6 +44,19 @@ python contact_finder.py            # default: at most 10 lookups (1 credit each
 - The free plan is about 50 credits a month, so run the hiring check first and only look up companies that have a real matching role.
 - `contacts.csv` ranks recruiters/HR first, then heads of AI/engineering, then founders. Check `verification` before sending.
 - Use the contact for one personal, relevant message. Don't bulk-send.
+
+## Message drafts
+
+```bash
+cp profile.example.json profile.json     # edit: your name, education, experience, highlights
+python message_drafter.py                # plain roadmap template, no API key
+python message_drafter.py --llm gemini   # optional: personalise with Gemini (GEMINI_API_KEY, free tier)
+```
+
+- One draft per company by default (the top-ranked contact). Use `--per-company 2` for more.
+- Add `--applied` only once you've actually applied; otherwise the draft says you're applying.
+- The LLM is told to use only facts from `profile.json`, but read every draft before sending. If the LLM call fails or runs long, it falls back to the template.
+- Keep `highlights` to things that are true and specific; one good line beats a list.
 
 ## Tuning
 
