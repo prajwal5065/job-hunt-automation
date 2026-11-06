@@ -243,6 +243,7 @@ def main(argv=None):
                 all_matches.append({
                     "company": name, **m, "ats": res["ats"],
                     "board_source": res["how"],
+                    "website": row.get("website", ""),
                     "funding_round": row.get("funding_round", ""),
                     "funding_date": row.get("funding_date", ""),
                     "status": "", "notes": "",
@@ -251,7 +252,7 @@ def main(argv=None):
 
     all_matches.sort(key=lambda m: -m["score"])
     fields = ["company", "title", "location", "location_match", "level", "score", "url",
-              "ats", "board_source", "funding_round", "funding_date", "status", "notes"]
+              "ats", "board_source", "website", "funding_round", "funding_date", "status", "notes"]
     with open(args.out, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()

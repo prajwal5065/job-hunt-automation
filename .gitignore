@@ -4,3 +4,5 @@ no_board.csv
 __pycache__/
 .venv/
 .env
+contacts.csv
+contacts_cache.json
