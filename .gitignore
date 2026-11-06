@@ -1,0 +1,6 @@
+companies.csv
+matches.csv
+no_board.csv
+__pycache__/
+.venv/
+.env
