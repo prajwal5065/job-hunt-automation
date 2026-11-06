@@ -121,10 +121,10 @@ def main(argv=None):
         out.append({"company": r["company"], "contact": r.get("name", ""), "position": r.get("position", ""),
                     "email": r["email"], "linkedin": r.get("linkedin", ""), "role": r["role_to_apply"],
                     "apply_url": r.get("apply_url", ""), "subject": subject, "body": body, "mode": mode,
-                    "sent": "", "follow_up_date": "", "notes": ""})
+                    "sent": "", "follow_up_date": "", "replied": "", "followed_up": "", "notes": ""})
 
     fields = ["company", "contact", "position", "email", "linkedin", "role", "apply_url", "subject", "body",
-              "mode", "sent", "follow_up_date", "notes"]
+              "mode", "sent", "follow_up_date", "replied", "followed_up", "notes"]
     with open(args.out, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()
