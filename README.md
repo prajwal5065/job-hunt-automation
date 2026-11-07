@@ -24,6 +24,14 @@ python import_companies.py export.csv --source crunchbase
 
 Column names are matched loosely (`Organization Name`, `Homepage URL`, `Last Funding Type`, ...). Websites are cleaned to a bare domain and duplicates are skipped, so you can keep importing new batches into the same file. Companies without a website still work for the hiring check but can't be looked up for contacts.
 
+## Check your setup
+
+```bash
+python pipeline.py doctor
+```
+
+Checks that `companies.csv` / `profile.json` exist, that the Greenhouse, Lever and Ashby endpoints respond (using one well-known company each), that the Workable and Recruitee hosts are reachable, and that your Hunter key works and how many credits are left. `FAIL` lines point at a real problem; `INFO` lines are optional or inconclusive. If a sample company fails, try another before assuming a bug, since companies change job boards. Paste the output into an issue or chat if something looks wrong.
+
 ## One command
 
 ```bash

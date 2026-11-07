@@ -106,5 +106,41 @@ class TestRun(InTempDir):
         cf.assert_not_called()
 
 
+class TestDoctor(InTempDir):
+    class R:
+        def __init__(self, code): self.status_code = code
+
+    def run_doctor(self, env, fetch=lambda slug: [object()] * 3, probe=lambda url: TestDoctor.R(404), account=(200, {"data": {"requests": {"credits": {"used": 5, "available": 50}}}})):
+        fetchers = {k: fetch for k in ("greenhouse", "lever", "ashby")}
+        with patch.dict(pl.hiring_checker.FETCHERS, fetchers), \
+                patch.object(pl.hiring_checker, "http_get", side_effect=probe), \
+                patch.object(pl.contact_finder, "api_get", return_value=account):
+            return {name: (lvl, detail) for lvl, name, detail in pl.doctor(env)}
+
+    def test_all_good(self):
+        Path("companies.csv").write_text("company,website\n")
+        out = self.run_doctor({"HUNTER_API_KEY": "k", "GEMINI_API_KEY": "g"})
+        self.assertEqual(out["greenhouse board"][0], "OK")
+        self.assertEqual(out["workable endpoint"][0], "OK")
+        self.assertEqual(out["Hunter"], ("OK", "key works, 45 credits left"))
+        self.assertEqual(out["companies.csv"][0], "OK")
+        self.assertEqual(out["profile.json"][0], "INFO")
+
+    def test_missing_keys_are_info_not_failures(self):
+        out = self.run_doctor({})
+        self.assertEqual(out["Hunter"][0], "INFO")
+        self.assertEqual(out["Gemini"][0], "INFO")
+
+    def test_failures_reported(self):
+        out = self.run_doctor({"HUNTER_API_KEY": "bad"}, fetch=lambda slug: None, probe=lambda url: None, account=(401, None))
+        self.assertEqual(out["lever board"][0], "FAIL")
+        self.assertEqual(out["recruitee endpoint"][0], "FAIL")
+        self.assertEqual(out["Hunter"][0], "FAIL")
+
+    def test_unexpected_status_is_info(self):
+        out = self.run_doctor({}, probe=lambda url: TestDoctor.R(200))
+        self.assertEqual(out["workable endpoint"][0], "INFO")
+
+
 if __name__ == "__main__":
     unittest.main()
