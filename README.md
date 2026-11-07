@@ -14,6 +14,16 @@ Applying and messaging stay manual.
 6. **`message_drafter.py`:** writes a short draft per contact into `drafts.csv`. You edit and send it yourself.
 7. **`follow_up.py`:** tracks what you sent and drafts the one follow-up when there's no reply after about 6 days.
 
+## Building companies.csv
+
+```bash
+python import_companies.py export.csv                  # CSV/TSV from Crunchbase, Sheets, Notion...
+python import_companies.py --add "Acme AI" acme.ai     # add one company
+python import_companies.py export.csv --source crunchbase
+```
+
+Column names are matched loosely (`Organization Name`, `Homepage URL`, `Last Funding Type`, ...). Websites are cleaned to a bare domain and duplicates are skipped, so you can keep importing new batches into the same file. Companies without a website still work for the hiring check but can't be looked up for contacts.
+
 ## One command
 
 ```bash
