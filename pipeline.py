@@ -4,6 +4,7 @@
   python pipeline.py run          # companies.csv -> matches.csv -> contacts.csv -> drafts.csv
   python pipeline.py run --dry-run   # same, but only previews who would be looked up in Hunter
   python pipeline.py status       # counts at every stage + follow-ups due
+  python pipeline.py doctor       # check your setup and that the job-board/Hunter endpoints respond
 
 Run it from the project folder. Sending messages and applying stay manual.
 """
@@ -74,6 +75,65 @@ def print_status(s):
     print(f"Follow-ups due now:          {n('follow_ups_due')}   (waiting: {n('waiting')})")
 
 
+SAMPLE_BOARDS = [("greenhouse", "anthropic"), ("lever", "mistral"), ("ashby", "openai")]
+PROBE_URLS = {
+    "workable": "https://apply.workable.com/api/v1/widget/accounts/zz-no-such-company-zz",
+    "recruitee": "https://zz-no-such-company-zz.recruitee.com/api/offers/",
+}
+
+
+def doctor(env=None):
+    """Check setup and live endpoints. Returns a list of (level, name, detail); level is OK, FAIL or INFO."""
+    env = os.environ if env is None else env
+    res = []
+
+    for name, hint in (("companies.csv", "build it with import_companies.py"),
+                       ("profile.json", "copy profile.example.json and edit it")):
+        res.append(("OK", name, "found") if Path(name).exists() else ("INFO", name, f"not found yet ({hint})"))
+
+    for ats, slug in SAMPLE_BOARDS:
+        jobs = hiring_checker.FETCHERS[ats](slug)
+        if jobs is None:
+            res.append(("FAIL", f"{ats} board", f"no usable response for '{slug}' (network blocked, endpoint changed, "
+                                                 "or that company moved boards; try another company before assuming a bug)"))
+        else:
+            res.append(("OK", f"{ats} board", f"'{slug}' returned {len(jobs)} open roles"))
+
+    for ats, url in PROBE_URLS.items():
+        r = hiring_checker.http_get(url)
+        if r is None:
+            res.append(("FAIL", f"{ats} endpoint", "no response (network blocked or the host didn't resolve; inconclusive)"))
+        elif r.status_code == 404:
+            res.append(("OK", f"{ats} endpoint", "reachable (404 for an unknown company, as expected)"))
+        else:
+            res.append(("INFO", f"{ats} endpoint", f"HTTP {r.status_code} for an unknown company; test it on a real {ats} company"))
+
+    key = env.get("HUNTER_API_KEY", "")
+    if not key:
+        res.append(("INFO", "Hunter", "HUNTER_API_KEY not set (needed for contact_finder.py)"))
+    else:
+        status, data = contact_finder.api_get("/account", api_key=key)
+        if status == 200:
+            left = contact_finder.credits_left(key)
+            res.append(("OK", "Hunter", "key works" + (f", {left} credits left" if left is not None else "")))
+        elif status in (401, 403):
+            res.append(("FAIL", "Hunter", "key rejected (401/403); check HUNTER_API_KEY"))
+        else:
+            res.append(("FAIL", "Hunter", f"account check failed (HTTP {status or 'no response'})"))
+
+    res.append(("OK" if env.get("GEMINI_API_KEY") else "INFO", "Gemini",
+                "key set" if env.get("GEMINI_API_KEY") else "GEMINI_API_KEY not set (only needed for --llm gemini)"))
+    return res
+
+
+def print_doctor(results):
+    for level, name, detail in results:
+        print(f"[{level:4}] {name}: {detail}")
+    fails = sum(1 for lvl, _, _ in results if lvl == "FAIL")
+    print(f"\n{fails} problem(s). INFO lines are optional or inconclusive." if fails
+          else "\nNo problems found. INFO lines are optional or inconclusive.")
+
+
 def run(args):
     if not Path(FILES["companies"]).exists():
         sys.exit("companies.csv not found. Build it by hand first (see companies.example.csv).")
@@ -131,10 +191,14 @@ def main(argv=None):
     r.add_argument("--llm", choices=["gemini"])
     r.add_argument("--applied", action="store_true", help="drafts say you've already applied (only if true)")
     sub.add_parser("status", help="counts at each stage and follow-ups due")
+    sub.add_parser("doctor", help="check setup and that the job-board/Hunter endpoints respond")
     args = ap.parse_args(argv)
 
     if args.cmd == "status":
         print_status(status())
+        return 0
+    if args.cmd == "doctor":
+        print_doctor(doctor())
         return 0
     return run(args)
 
