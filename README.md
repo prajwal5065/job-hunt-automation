@@ -7,7 +7,7 @@ Applying and messaging stay manual.
 ## Pipeline
 
 1. **You:** build `companies.csv` by hand (funding news, VC portfolio pages, Crunchbase profile views). See `companies.example.csv`.
-2. **`hiring_checker.py`:** finds each company's public Greenhouse / Lever / Ashby job board and keeps roles that match `keywords.json`.
+2. **`hiring_checker.py`:** finds each company's public Greenhouse / Lever / Ashby / Workable / Recruitee job board and keeps roles that match `keywords.json`.
 3. **You:** open the links in `matches.csv`, apply, and track progress in the `status` / `notes` columns.
 4. **`contact_finder.py`:** for the best-scoring matches, looks up a few hiring-relevant contacts via Hunter.io (free plan) into `contacts.csv`.
 5. **You:** pick one person per role, write a short specific message, send it yourself, log it in `contacted` / `notes`.
@@ -89,7 +89,7 @@ Titles are matched as whole words, so `ml` won't match "HTML".
 
 ## Limits
 
-- Only companies on Greenhouse, Lever or Ashby are covered. Others land in `no_board.csv`.
+- Only companies on Greenhouse, Lever, Ashby, Workable or Recruitee are covered. Others (for example Zoho Recruit, Keka, Darwinbox or a custom careers page) land in `no_board.csv`.
 - Matching uses titles only, so a role needing 3+ years can still appear if the title looks entry-level.
 - Roles titled just "Software Engineer" won't match unless you add that to `role_keywords`.
 
