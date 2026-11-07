@@ -4,6 +4,29 @@ Personal tool that automates the research half of the "startup remote job hunt" 
 you pick the companies, the script finds which of them have a matching open role.
 Applying and messaging stay manual.
 
+## Quickstart (about 20 minutes)
+
+```bash
+git clone https://github.com/prajwal5065/job-hunt-automation && cd job-hunt-automation
+pip install -r requirements.txt
+python pipeline.py doctor                              # 1. check setup and that the endpoints respond
+python import_companies.py --add "Acme AI" acme.ai     # 2. add 5 companies you found by hand (repeat, or import a CSV)
+cp profile.example.json profile.json                   # 3. edit it: your real, specific highlights
+python pipeline.py run --dry-run                       # 4. hiring check, then preview Hunter lookups (spends nothing)
+export HUNTER_API_KEY=...                              # 5. free key from hunter.io/api_keys
+python pipeline.py run                                 #    hiring check -> contacts -> drafts
+```
+
+Then open `drafts.csv`, read each draft, send the ones you like yourself, and log it:
+
+```bash
+python follow_up.py sent "Acme AI"
+```
+
+**Every few days:** `python follow_up.py` lists the follow-ups that are due (and drafts them), `python pipeline.py status` shows where everything stands.
+
+If `doctor` shows a FAIL or `run` behaves oddly on a real company, that is the thing to fix first.
+
 ## Pipeline
 
 1. **You:** build `companies.csv` by hand (funding news, VC portfolio pages, Crunchbase profile views). See `companies.example.csv`.
