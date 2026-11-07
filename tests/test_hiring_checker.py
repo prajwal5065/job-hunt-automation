@@ -33,6 +33,17 @@ class TestDetect(unittest.TestCase):
         self.assertIn(("greenhouse", "delta"), got)
         self.assertNotIn(("greenhouse", "embed"), got)
 
+    def test_find_workable_and_recruitee(self):
+        t = ('<a href="https://apply.workable.com/acme-ai/">x</a> '
+             '<a href="https://apply.workable.com/j/ABC123">job</a> '
+             '<a href="https://beta.recruitee.com/o/ml-engineer">y</a> '
+             '<a href="https://www.recruitee.com/pricing">ad</a>')
+        got = hc.find_ats_in_text(t)
+        self.assertIn(("workable", "acme-ai"), got)
+        self.assertIn(("recruitee", "beta"), got)
+        self.assertNotIn(("workable", "j"), got)
+        self.assertNotIn(("recruitee", "www"), got)
+
     def test_slug_guesses(self):
         self.assertEqual(hc.slug_guesses("Example AI", "www.exampleai.com"), ["example-ai", "exampleai"])
 
@@ -72,6 +83,20 @@ class TestFetchAndRun(unittest.TestCase):
         with patch.object(hc, "http_get", return_value=Resp(payload={"jobs": [
                 {"title": "AI Engineer", "location": "India", "isRemote": False, "jobUrl": "u"}]})):
             self.assertEqual(hc.fetch_ashby("a")[0].title, "AI Engineer")
+
+    def test_workable_and_recruitee_parsers(self):
+        wk = {"jobs": [{"title": "AI Intern", "city": "Pune", "country": "India", "telecommuting": False, "url": "u"},
+                       {"title": "LLM Engineer", "city": "", "country": "", "telecommuting": True, "url": "u2"}]}
+        with patch.object(hc, "http_get", return_value=Resp(payload=wk)):
+            jobs = hc.fetch_workable("a")
+        self.assertEqual(jobs[0].location, "Pune, India")
+        self.assertTrue(jobs[1].remote)
+        rc = {"offers": [{"title": "ML Intern", "location": "Pune, India", "remote": False, "careers_url": "u"}]}
+        with patch.object(hc, "http_get", return_value=Resp(payload=rc)):
+            self.assertEqual(hc.fetch_recruitee("a")[0].location, "Pune, India")
+        with patch.object(hc, "http_get", return_value=Resp(payload={"unexpected": 1})):
+            self.assertIsNone(hc.fetch_workable("a"))
+            self.assertIsNone(hc.fetch_recruitee("a"))
 
     def test_404_means_no_board(self):
         with patch.object(hc, "http_get", return_value=Resp(status=404)):

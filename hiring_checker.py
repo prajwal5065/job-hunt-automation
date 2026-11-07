@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Hiring checker.
 
-Reads companies.csv, finds each company's public job board (Greenhouse, Lever
-or Ashby), pulls the open roles, and writes the ones matching keywords.json to
+Reads companies.csv, finds each company's public job board (Greenhouse, Lever,
+Ashby, Workable or Recruitee), pulls the open roles, and writes the ones matching keywords.json to
 matches.csv. Companies with no detectable board go to no_board.csv so you can
 check them by hand.
 
@@ -23,13 +23,15 @@ import requests
 
 UA = {"User-Agent": "job-hunt-automation/0.1 (personal job search)"}
 TIMEOUT = 15
-SKIP_SLUGS = {"embed", "jobs", "api", "v1", "v0", "static"}
+SKIP_SLUGS = {"embed", "jobs", "api", "v1", "v0", "static", "j", "www", "app", "careers"}
 
 ATS_PATTERNS = {
     "greenhouse": re.compile(
         r"(?:boards|job-boards)(?:\.eu)?\.greenhouse\.io/(?:embed/job_board\?for=)?([a-z0-9_-]+)", re.I),
     "lever": re.compile(r"jobs(?:\.eu)?\.lever\.co/([a-z0-9_.-]+)", re.I),
     "ashby": re.compile(r"jobs\.ashbyhq\.com/([a-z0-9_.%-]+)", re.I),
+    "workable": re.compile(r"apply\.workable\.com/([a-z0-9_-]+)", re.I),
+    "recruitee": re.compile(r"(?:https?:)?//([a-z0-9-]+)\.recruitee\.com", re.I),
 }
 
 
@@ -98,7 +100,32 @@ def fetch_ashby(slug):
     return jobs
 
 
-FETCHERS = {"greenhouse": fetch_greenhouse, "lever": fetch_lever, "ashby": fetch_ashby}
+def fetch_workable(slug):
+    data = _json(f"https://apply.workable.com/api/v1/widget/accounts/{slug}")
+    if not isinstance(data, dict) or "jobs" not in data:
+        return None
+    jobs = []
+    for j in data.get("jobs", []):
+        loc = ", ".join(x for x in (j.get("city"), j.get("state"), j.get("country")) if x)
+        remote = bool(j.get("telecommuting")) or "remote" in loc.lower()
+        jobs.append(Job(j.get("title", ""), loc, j.get("url") or j.get("shortlink", ""), remote, "workable"))
+    return jobs
+
+
+def fetch_recruitee(slug):
+    data = _json(f"https://{slug}.recruitee.com/api/offers/")
+    if not isinstance(data, dict) or "offers" not in data:
+        return None
+    jobs = []
+    for j in data.get("offers", []):
+        loc = j.get("location") or ", ".join(x for x in (j.get("city"), j.get("country")) if x)
+        remote = bool(j.get("remote")) or "remote" in (loc or "").lower()
+        jobs.append(Job(j.get("title", ""), loc or "", j.get("careers_url", ""), remote, "recruitee"))
+    return jobs
+
+
+FETCHERS = {"greenhouse": fetch_greenhouse, "lever": fetch_lever, "ashby": fetch_ashby,
+            "workable": fetch_workable, "recruitee": fetch_recruitee}
 
 
 # ---- finding the board ----
